@@ -1,0 +1,20 @@
+name: opossum-with-functions
+namespace: ""
+runtime: node
+image: docker.io/lholmquist/opossum-with-functions:latest
+imageDigest: sha256:38cd14684088c8359f4f30d7f9e2082c0e2a8a7475a48773fa730042a75aef60
+builder: quay.io/boson/faas-nodejs-builder:v0.8.3
+builderMap:
+  default: quay.io/boson/faas-nodejs-builder:v0.8.3
+volumes: []
+envs:
+- name: POSTGRESQL_USER
+  value: luke
+- name: POSTGRESQL_PASSWORD
+  value: secret
+- name: POSTGRESQL_DATABASE
+  value: opossum
+- name: POSTGRESQL_SERVICE_HOST
+  value: opossum-sql
+annotations: {}
+options: {}
