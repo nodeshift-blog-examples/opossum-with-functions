@@ -2,12 +2,17 @@ const Opossum = require('opossum');
 const db = require('./db');
 const cruds = require('./cruds');
 
-function nameService() {
-  return Promise.reject();
-}
-
 let circuit;
 const circuitName = 'funtimes';
+
+function externalService () {
+  return Promise.reject('Fail');
+}
+
+function outputCircuitOptions (message, circuit) {
+  let circuitAsJSON = circuit.toJSON();
+  console.log(message, circuitAsJSON.state);
+}
 
 async function init() {
 
@@ -15,7 +20,6 @@ async function init() {
     // is there anything that should be init;d more globally,  but this is the entry point i guess
     // should the functions be decelared by themeselsves
     const initd = await db.init();
-    console.log(initd);
   } catch (err) {
     console.log('error', err);
   }
@@ -31,7 +35,7 @@ async function init() {
       circuitExport = JSON.parse(result.rows[0].circuit);
     }
 
-    console.log(circuitExport);
+    console.log('init export state', circuitExport.state);
   } catch (err) {
     console.log('err', err);
   }
@@ -46,8 +50,43 @@ async function init() {
   };
 
   // Use a circuit breaker for the name service and define fallback function
-  circuit = new Opossum(nameService, circuitOptions);
+  circuit = new Opossum(externalService, circuitOptions);
   circuit.fallback(_ => 'Fallback');
+
+  circuit.on('success',
+    (result) => {
+      outputCircuitOptions(`SUCCESS: ${JSON.stringify(result)}`, circuit)
+  });
+
+  circuit.on('timeout',
+    (result) => {
+      outputCircuitOptions('TIMEOUT: Service is taking too long to respond.', circuit)
+    });
+
+  circuit.on('reject',
+    () => {
+      outputCircuitOptions('REJECTED: The circuit for ${route} is open. Failing fast.', circuit)
+    });
+
+  circuit.on('open',
+    () => {
+      outputCircuitOptions('OPEN: The circuit for the service just opened.', circuit)
+    });
+
+  circuit.on('halfOpen',
+    () => {
+      outputCircuitOptions('HALF_OPEN: The circuit for the service is half open.', circuit)
+    });
+
+  circuit.on('close',
+    () => {
+      outputCircuitOptions('CLOSE: The circuit has closed. Service OK.', circuit)
+    });
+
+  circuit.on('fallback',
+    (data) => {
+      outputCircuitOptions(`FALLBACK: ${JSON.stringify(data)}`, circuit)
+    });
 
 }
 
@@ -65,15 +104,16 @@ init();
  * @param {string} name the "name" query parameter
  */
 async function invokeDestructured({ name }) {
-  // debug: inspect --brk for faas-js
+  // export the current circuit
+  outputCircuitOptions('invoke circuit state before', circuit);
+
   const result = await circuit.fire();
 
-  const circuitAsJSON = circuit.toJSON();
-  console.log(circuitAsJSON);
-  // Right out to somewhere
+  // export the current circuit
+  outputCircuitOptions('invoke circuit state after', circuit);
   // Now write the json to a  DB
   try {
-    await cruds.create(JSON.stringify(circuitAsJSON), circuitName);
+    await cruds.create(JSON.stringify(circuit.toJSON()), circuitName);
   } catch (err) {
     console.log('errrrr', err);
   }

@@ -16,7 +16,6 @@ async function didInitHappen () {
 
   try {
     await pool.query(query);
-    console.log('Database Already Created');
     return true;
   } catch (err) {
     return false;
