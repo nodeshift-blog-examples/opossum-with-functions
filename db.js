@@ -42,6 +42,7 @@ async function query (text, parameters) {
 
 async function init () {
   const initHappened = await didInitHappen();
+  console.log(initHappened);
   if (!initHappened) {
     return pool.query(initScript);
   }

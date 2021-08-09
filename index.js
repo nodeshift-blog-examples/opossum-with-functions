@@ -5,7 +5,13 @@ const cruds = require('./cruds');
 let circuit;
 const circuitName = 'funtimes';
 
+let serviceStatus = true;
+
 function externalService () {
+  if (serviceStatus) {
+    return Promise.resolve('Resolved');
+  }
+
   return Promise.reject('Fail');
 }
 
@@ -33,9 +39,8 @@ async function init() {
 
     if (result.rowCount !== 0) {
       circuitExport = JSON.parse(result.rows[0].circuit);
+      console.log('init export state', circuitExport.state);
     }
-
-    console.log('init export state', circuitExport.state);
   } catch (err) {
     console.log('err', err);
   }
@@ -103,7 +108,16 @@ init();
  *
  * @param {string} name the "name" query parameter
  */
-async function invokeDestructured({ name }) {
+async function invokeDestructured({ name, service }) {
+  console.log(service);
+  if (service) {
+    if (service === false || service === 'false') {
+      serviceStatus = false;
+    } else {
+      serviceStatus = true;
+    }
+    return;
+  }
   // export the current circuit
   outputCircuitOptions('invoke circuit state before', circuit);
 
@@ -115,7 +129,7 @@ async function invokeDestructured({ name }) {
   try {
     await cruds.create(JSON.stringify(circuit.toJSON()), circuitName);
   } catch (err) {
-    console.log('errrrr', err);
+    console.log('invoke error', err);
   }
 
   return `Hello ${result}!`;
