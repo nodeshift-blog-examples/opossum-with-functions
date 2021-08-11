@@ -108,7 +108,7 @@ init();
  *
  * @param {string} name the "name" query parameter
  */
-async function invokeDestructured({ name, service }) {
+async function handle({ name, service }) {
   console.log(service);
   if (service) {
     if (service === false || service === 'false') {
@@ -118,21 +118,18 @@ async function invokeDestructured({ name, service }) {
     }
     return;
   }
-  // export the current circuit
+  // ouput the current circuit
   outputCircuitOptions('invoke circuit state before', circuit);
 
   const result = await circuit.fire();
 
-  // export the current circuit
+  // ouput the current circuit
   outputCircuitOptions('invoke circuit state after', circuit);
-  // Now write the json to a  DB
-  try {
-    await cruds.create(JSON.stringify(circuit.toJSON()), circuitName);
-  } catch (err) {
-    console.log('invoke error', err);
-  }
+
+  // Write to the DB async, so we don't need to hold up the return of the function
+  cruds.create(JSON.stringify(circuit.toJSON()), circuitName);
 
   return `Hello ${result}!`;
 }
 
-module.exports = invokeDestructured;
+module.exports = handle;
