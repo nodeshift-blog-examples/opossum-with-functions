@@ -18,7 +18,7 @@
     "tape": "^5.0.1"
   },
   "dependencies": {
-    "opossum": "~6.2.0",
+    "opossum": "~6.2.1",
     "pg": "~8.7.1"
   }
 }
